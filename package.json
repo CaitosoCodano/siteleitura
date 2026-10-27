@@ -1,0 +1,10 @@
+{
+  "name":"entrelinhas-privado",
+  "version":"3.0.0",
+  "private":true,
+  "type":"module",
+  "description":"Rede social privada de livros com Node.js e SQLite, pronta para Render",
+  "engines":{"node":">=22.13.0"},
+  "scripts":{"start":"node server.js","dev":"node --watch server.js","test":"node --test tests/*.test.js"},
+  "license":"UNLICENSED"
+}

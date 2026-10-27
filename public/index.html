@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#12101a" />
+  <meta name="description" content="Entrelinhas: sua comunidade privada para compartilhar leituras, resenhas e descobertas." />
+  <title>Entrelinhas · Onde histórias aproximam pessoas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <script defer src="/app.js"></script>
+</head>
+<body>
+ <div id="toast" role="status" aria-live="polite"></div>
+ <div id="authPage" class="auth-page" hidden>
+   <section class="auth-promo">
+     <div class="auth-logo"><span class="logo-mark">✦</span> entre<em>linhas</em></div>
+     <div class="auth-art"><span class="star s1">✦</span><span class="star s2">✧</span><div class="book-sculpture"><div class="book-back"></div><div class="book-face"><span class="book-small">UM ESPAÇO SÓ SEU</span><span class="book-big">Histórias<br>que nos<br><i>conectam.</i></span><span class="book-mark">✺</span></div></div></div>
+     <div class="auth-promo-copy"><span class="eyebrow">SUA COMUNIDADE DE LEITURA</span><h1>Todo livro é um<br>novo <i>universo.</i></h1><p>Um lugar reservado para descobrir, sentir e compartilhar histórias com quem também ama ler.</p></div>
+     <div class="auth-foot">✦ Privado por convite &nbsp; · &nbsp; ✦ Resenhas de verdade &nbsp; · &nbsp; ✦ Sem perfis inventados</div>
+   </section>
+   <section class="auth-form-wrap"><div class="auth-form-card"><div class="mobile-only auth-mobile-brand">✦ entre<em>linhas</em></div><div class="auth-pill">✦ Comunidade privada</div><h2 id="authTitle">Bem-vindo de volta.</h2><p class="muted" id="authSubtitle">Entre na sua conta para continuar sua história.</p>
+      <form id="authForm"><div id="nameWrap" class="field" hidden><label for="authName">Seu nome</label><input id="authName" autocomplete="name" placeholder="Como quer ser chamado?" maxlength="60" /></div><div class="field"><label for="authEmail">E-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="voce@exemplo.com" /></div><div class="field"><label for="authPass">Senha</label><input id="authPass" type="password" minlength="10" required placeholder="••••••••••" /></div><div id="inviteWrap" class="field" hidden><label for="inviteCode">Código de convite</label><input id="inviteCode" placeholder="Código compartilhado pelo administrador" autocomplete="off" /></div><button class="btn btn-primary btn-wide" id="authSubmit" type="submit">Entrar na comunidade <span>→</span></button></form>
+      <div id="googleSection" hidden><div class="divider-word"><span>ou continue com</span></div><div id="googleButton"></div><p class="tip-small">No primeiro acesso com Google, informe o código de convite no campo acima.</p></div>
+      <div class="auth-switch" id="authSwitch">Ainda não tem uma conta? <button class="link-btn" id="switchAuth" type="button">Criar minha conta</button></div>
+      <div class="auth-info">🔒 Só pessoas convidadas podem entrar. Seus dados e resenhas pertencem à sua comunidade.</div>
+   </div></section>
+ </div>
+ <div id="app" class="app-layout" hidden>
+  <aside class="sidebar">
+    <div class="brand"><span class="logo-mark">✦</span><span>entre<em>linhas</em><small>CLUBE DE LEITURA</small></span></div>
+    <div class="side-caption">MENU PRINCIPAL</div>
+    <nav id="sideNav" class="nav-items" aria-label="Navegação">
+      <button data-nav="feed" class="nav-btn active"><span class="nav-ico">⌂</span> Início</button>
+      <button data-nav="explore" class="nav-btn"><span class="nav-ico">⌕</span> Explorar livros</button>
+      <button data-nav="shelf" class="nav-btn"><span class="nav-ico">▤</span> Minha estante</button>
+      <button data-nav="community" class="nav-btn"><span class="nav-ico">♧</span> Comunidade</button>
+      <button data-nav="profile" class="nav-btn"><span class="nav-ico">◉</span> Meu perfil</button>
+    </nav>
+    <div class="side-bottom"><div class="side-mini">“A leitura nos dá um lugar para ir quando temos que ficar onde estamos.”</div><button id="sideUser" class="side-user"><span id="sideAvatar" class="avatar">📖</span><span class="side-user-label"><strong id="sideName"></strong><small>Minha conta</small></span><span class="side-chevron">›</span></button><button id="logoutBtn" class="logout-btn">↪ Sair da conta</button></div>
+  </aside>
+  <div class="app-center">
+    <header class="topbar"><div class="top-title"><span class="mobile-mark">✦</span><span id="pageBreadcrumb">Sua comunidade</span></div><div class="header-right"><span class="private-chip">✧ Comunidade privada</span><button id="headProfile" aria-label="Abrir perfil" class="mini-profile">📖</button></div></header>
+    <main id="main" class="main-content"></main>
+  </div>
+  <aside class="rightbar" id="rightbar"><div class="right-inner"><div class="right-top"><span class="eyebrow">UM ESPAÇO PARA SENTIR</span><h3>Entre uma página<br>e outra, <i>a vida.</i></h3><p>Cada história merece ser compartilhada.</p><div class="right-flower">✺</div></div><div class="right-box"><div class="eyebrow">SEU CANTINHO</div><div id="rightStats" class="right-stat-list"></div></div><div class="right-footer">Feito para leitores reais. ♡</div></div></aside>
+  <nav class="mobile-nav" aria-label="Navegação mobile"><button data-nav="feed" class="mobile-nav-btn active"><span>⌂</span><small>Início</small></button><button data-nav="explore" class="mobile-nav-btn"><span>⌕</span><small>Explorar</small></button><button data-nav="shelf" class="mobile-nav-btn"><span>▤</span><small>Estante</small></button><button data-nav="community" class="mobile-nav-btn"><span>♧</span><small>Pessoas</small></button><button data-nav="profile" class="mobile-nav-btn"><span>◉</span><small>Perfil</small></button></nav>
+ </div>
+ <dialog id="modal"><div id="modalContent"></div><button id="closeModal" class="modal-close" aria-label="Fechar">✕</button></dialog>
+</body>
+</html>

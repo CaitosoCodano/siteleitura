@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: entrelinhas-privado
+    runtime: node
+    region: ohio
+    plan: 0.5c-512mb
+    buildCommand: echo "Sem dependencias externas; usando Node 22 e SQLite nativo"
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: NODE_ENV
+        value: production
+      - key: DB_PATH
+        value: /var/data/entrelinhas.sqlite
+      - key: INVITE_CODE
+        sync: false
+    disk:
+      name: entrelinhas-data
+      mountPath: /var/data
+      sizeGB: 1
