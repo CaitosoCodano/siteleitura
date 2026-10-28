@@ -53,6 +53,16 @@ CREATE TABLE IF NOT EXISTS follows (
  follower_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
  following_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
  PRIMARY KEY(follower_id,following_id), CHECK(follower_id != following_id));
+CREATE TABLE IF NOT EXISTS direct_messages (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ recipient_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ content TEXT NOT NULL CHECK(length(content) BETWEEN 1 AND 1500),
+ created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ read_at TEXT,
+ CHECK(sender_id != recipient_id));
+CREATE INDEX IF NOT EXISTS idx_dm_pair ON direct_messages(sender_id,recipient_id,id DESC);
+CREATE INDEX IF NOT EXISTS idx_dm_unread ON direct_messages(recipient_id,read_at,sender_id);
 CREATE INDEX IF NOT EXISTS idx_entries_created ON entries(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_entries_user ON entries(user_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_comments_entry ON comments(entry_id);
@@ -105,6 +115,17 @@ const entryFields=`e.id,e.kind,e.rating,e.content,e.created_at,e.user_id,
  (SELECT COUNT(*) FROM comments WHERE entry_id=e.id) AS comment_count,
  EXISTS(SELECT 1 FROM likes WHERE entry_id=e.id AND user_id=?) AS liked`;
 const entrySQL=`SELECT ${entryFields} FROM entries e JOIN users u ON u.id=e.user_id LEFT JOIN books b ON b.id=e.book_id`;
+// Apenas leitores que se seguem mutuamente podem ler e enviar mensagens.
+const mutualFollow=(a,b)=>a!==b&&!!one(`SELECT 1 FROM follows f
+ JOIN follows back ON back.follower_id=f.following_id AND back.following_id=f.follower_id
+ WHERE f.follower_id=? AND f.following_id=?`,a,b);
+const messageRate=new Map();
+function checkMessageRate(userId){
+ const now=Date.now();let rec=messageRate.get(userId);
+ if(!rec||now>rec.until)rec={until:now+60_000,count:0};
+ rec.count++;messageRate.set(userId,rec);
+ if(rec.count>30)throw apiError(429,'Limite de mensagens atingido. Aguarde um minuto.');
+}
 const rateBucket=new Map();
 function limited(req){let key=(req.socket.remoteAddress||'')+':' + (req.url||'');const t=Date.now();const rec=rateBucket.get(key)||{count:0,until:t+15*60000};if(rec.until<t){rec.count=0;rec.until=t+15*60000;}rec.count++;rateBucket.set(key,rec);return rec.count>15;}
 const MAX_BODY=18_000;
@@ -172,15 +193,16 @@ async function handleApi(req,res,pathname,search){
  if(pathname==='/api/people'&&req.method==='GET'){
    const users=all(`SELECT id,name,bio,avatar,created_at,
      EXISTS(SELECT 1 FROM follows WHERE follower_id=? AND following_id=u.id) AS following,
-     (SELECT COUNT(*) FROM follows WHERE following_id=u.id) AS followers
-     FROM users u WHERE id<>? ORDER BY created_at DESC LIMIT 80`,user.id,user.id);
+     (SELECT COUNT(*) FROM follows WHERE following_id=u.id) AS followers,
+     EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=u.id AND f.following_id=?) AS follows_me
+     FROM users u WHERE id<>? ORDER BY created_at DESC LIMIT 80`,user.id,user.id,user.id);
    return respond(res,200,{people:users});
  }
  const usermatch=pathname.match(/^\/api\/users\/(\d+)$/);
  if(usermatch&&req.method==='GET'){
    const id=Number(usermatch[1]),found=one('SELECT * FROM users WHERE id=?',id);
    if(!found)throw apiError(404,'Leitor não encontrado.');
-   return respond(res,200,{user:me(found),stats:stats(id),following:!!one('SELECT 1 FROM follows WHERE follower_id=? AND following_id=?',user.id,id)});
+   return respond(res,200,{user:me(found),stats:stats(id),following:!!one('SELECT 1 FROM follows WHERE follower_id=? AND following_id=?',user.id,id),mutual:mutualFollow(user.id,id)});
  }
  const followMatch=pathname.match(/^\/api\/users\/(\d+)\/follow$/);
  if(followMatch&&req.method==='POST'){
@@ -190,6 +212,53 @@ async function handleApi(req,res,pathname,search){
    if(f)run('DELETE FROM follows WHERE follower_id=? AND following_id=?',user.id,id);
    else run('INSERT INTO follows(follower_id,following_id) VALUES(?,?)',user.id,id);
    return respond(res,200,{following:!f});
+ }
+ // Direct privado: contatos aparecem apenas quando ambos se seguem.
+ if(pathname==='/api/messages/contacts'&&req.method==='GET'){
+   const contacts=all(`SELECT u.id,u.name,u.avatar,u.bio,
+     (SELECT m.content FROM direct_messages m WHERE
+       (m.sender_id=u.id AND m.recipient_id=?) OR (m.sender_id=? AND m.recipient_id=u.id)
+       ORDER BY m.id DESC LIMIT 1) AS last_message,
+     (SELECT m.created_at FROM direct_messages m WHERE
+       (m.sender_id=u.id AND m.recipient_id=?) OR (m.sender_id=? AND m.recipient_id=u.id)
+       ORDER BY m.id DESC LIMIT 1) AS last_at,
+     (SELECT COUNT(*) FROM direct_messages m WHERE m.sender_id=u.id AND m.recipient_id=? AND m.read_at IS NULL) AS unread
+     FROM users u
+     WHERE u.id<>? AND EXISTS(SELECT 1 FROM follows a WHERE a.follower_id=? AND a.following_id=u.id)
+       AND EXISTS(SELECT 1 FROM follows b WHERE b.follower_id=u.id AND b.following_id=?)
+     ORDER BY last_at DESC, u.name COLLATE NOCASE ASC LIMIT 100`,user.id,user.id,user.id,user.id,user.id,user.id,user.id,user.id);
+   return respond(res,200,{contacts});
+ }
+ if(pathname==='/api/messages/unread'&&req.method==='GET'){
+   const unread=one(`SELECT COUNT(*) AS n FROM direct_messages m
+     WHERE m.recipient_id=? AND m.read_at IS NULL
+       AND EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=? AND f.following_id=m.sender_id)
+       AND EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=m.sender_id AND f.following_id=?)`,user.id,user.id,user.id).n;
+   return respond(res,200,{unread});
+ }
+ const dmMatch=pathname.match(/^\/api\/messages\/(\d+)(?:\/(read))?$/);
+ if(dmMatch){
+   const peerId=Number(dmMatch[1]),markRead=!!dmMatch[2];
+   if(!Number.isSafeInteger(peerId)||peerId<=0||peerId===user.id)throw apiError(400,'Destinatário inválido.');
+   if(!one('SELECT id FROM users WHERE id=?',peerId))throw apiError(404,'Leitor não encontrado.');
+   if(!mutualFollow(user.id,peerId))throw apiError(403,'O Direct é permitido somente entre leitores que se seguem mutuamente.');
+   if(markRead&&req.method==='POST'){
+     run('UPDATE direct_messages SET read_at=CURRENT_TIMESTAMP WHERE sender_id=? AND recipient_id=? AND read_at IS NULL',peerId,user.id);
+     return respond(res,200,{ok:true});
+   }
+   if(!markRead&&req.method==='GET'){
+     const messages=all(`SELECT * FROM (SELECT id,sender_id,recipient_id,content,created_at,read_at
+       FROM direct_messages WHERE (sender_id=? AND recipient_id=?) OR (sender_id=? AND recipient_id=?)
+       ORDER BY id DESC LIMIT 100) ORDER BY id ASC`,user.id,peerId,peerId,user.id);
+     return respond(res,200,{messages});
+   }
+   if(!markRead&&req.method==='POST'){
+     const b=await body(req),content=trim(b.content,1501);
+     if(!content||content.length>1500)throw apiError(400,'Escreva uma mensagem com até 1.500 caracteres.');
+     checkMessageRate(user.id);
+     const id=Number(run('INSERT INTO direct_messages(sender_id,recipient_id,content) VALUES(?,?,?)',user.id,peerId,content).lastInsertRowid);
+     return respond(res,201,{message:one('SELECT id,sender_id,recipient_id,content,created_at,read_at FROM direct_messages WHERE id=?',id)});
+   }
  }
  if(pathname==='/api/books/search'&&req.method==='GET'){
    const q=trim(search.get('q'),80);if(q.length<2) return respond(res,200,{books:[]});

@@ -37,6 +37,7 @@
       <button data-nav="explore" class="nav-btn"><span class="nav-ico">⌕</span> Explorar livros</button>
       <button data-nav="shelf" class="nav-btn"><span class="nav-ico">▤</span> Minha estante</button>
       <button data-nav="community" class="nav-btn"><span class="nav-ico">♧</span> Comunidade</button>
+      <button data-nav="messages" class="nav-btn"><span class="nav-ico">✉</span> Mensagens <span class="dm-nav-count" id="dmUnreadDesktop" hidden></span></button>
       <button data-nav="profile" class="nav-btn"><span class="nav-ico">◉</span> Meu perfil</button>
     </nav>
     <div class="side-bottom"><div class="side-mini">“A leitura nos dá um lugar para ir quando temos que ficar onde estamos.”</div><button id="sideUser" class="side-user"><span id="sideAvatar" class="avatar">📖</span><span class="side-user-label"><strong id="sideName"></strong><small>Minha conta</small></span><span class="side-chevron">›</span></button><button id="logoutBtn" class="logout-btn">↪ Sair da conta</button></div>
@@ -46,7 +47,7 @@
     <main id="main" class="main-content"></main>
   </div>
   <aside class="rightbar" id="rightbar"><div class="right-inner"><div class="right-top"><span class="eyebrow">UM ESPAÇO PARA SENTIR</span><h3>Entre uma página<br>e outra, <i>a vida.</i></h3><p>Cada história merece ser compartilhada.</p><div class="right-flower">◈</div></div><div class="right-box"><div class="eyebrow">SEU ESPAÇO</div><div id="rightStats" class="right-stat-list"></div></div><div class="right-footer">Feito para leitores reais. ✦</div></div></aside>
-  <nav class="mobile-nav" aria-label="Navegação mobile"><button data-nav="feed" class="mobile-nav-btn active"><span>⌂</span><small>Início</small></button><button data-nav="explore" class="mobile-nav-btn"><span>⌕</span><small>Explorar</small></button><button data-nav="shelf" class="mobile-nav-btn"><span>▤</span><small>Estante</small></button><button data-nav="community" class="mobile-nav-btn"><span>♧</span><small>Pessoas</small></button><button data-nav="profile" class="mobile-nav-btn"><span>◉</span><small>Perfil</small></button></nav>
+  <nav class="mobile-nav" aria-label="Navegação mobile"><button data-nav="feed" class="mobile-nav-btn active"><span>⌂</span><small>Início</small></button><button data-nav="explore" class="mobile-nav-btn"><span>⌕</span><small>Explorar</small></button><button data-nav="shelf" class="mobile-nav-btn"><span>▤</span><small>Estante</small></button><button data-nav="community" class="mobile-nav-btn"><span>♧</span><small>Pessoas</small></button><button data-nav="messages" class="mobile-nav-btn"><span>✉</span><small>Direct</small><span class="dm-nav-count" id="dmUnreadMobile" hidden></span></button><button data-nav="profile" class="mobile-nav-btn"><span>◉</span><small>Perfil</small></button></nav>
  </div>
  <dialog id="modal"><div id="modalContent"></div><button id="closeModal" class="modal-close" aria-label="Fechar">✕</button></dialog>
 </body>
