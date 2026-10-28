@@ -10,3 +10,10 @@ node_modules/
 data/
 *.sqlite
 *.sqlite-*
+node_modules/
+.env
+.env.*
+!.env.example
+data/
+*.sqlite
+*.sqlite-*
