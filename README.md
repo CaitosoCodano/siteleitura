@@ -1,76 +1,63 @@
-# Entrelinhas · Rede social privada de livros (versão Render + GitHub)
+# Entrelinhas V5.4 — modo sem R2 (Cloudflare Workers + D1)
 
-Projeto funcional e independente de Supabase: **Node.js 22 + SQLite nativo**, com frontend responsivo, cadastro e login por e-mail/senha, acesso **somente com código de convite**, perfis, resenhas reais, estantes, publicações, comentários, curtidas e seguidores. Login Google é opcional, caso você configure sua própria credencial Google Cloud. **Não há perfis, livros, estatísticas ou posts de demonstração.**
+Esta edição é para quem **não quer ativar o R2 nem cadastrar cartão para hospedagem de mídias**. Utiliza somente o Worker e o banco D1 já existentes. **Não publica automaticamente** o site ao baixar o ZIP.
 
-## Como publicar pelo GitHub → Render
+## Novidades da V5.4 — Layout para desktop e celular
 
-1. **Crie um repositório privado no GitHub** (por exemplo, `entrelinhas`). Extraia o ZIP e envie **todos os arquivos da pasta `entrelinhas-render` para a raiz do repositório**, incluindo `render.yaml`. Não envie `.env` nem arquivos `.sqlite`.
-2. Entre em [Render](https://dashboard.render.com/) → **New** → **Blueprint** → conecte seu GitHub e selecione esse repositório. O `render.yaml` cria **um Web Service pago de entrada (`0.5c-512mb`) e um disco persistente de 1 GB em `/var/data`**.
-3. Na criação do Blueprint, defina `INVITE_CODE` com um código forte e secreto (ao menos 8 caracteres, idealmente 20+). Distribua o código **somente aos convidados**. Não coloque esse código em arquivo público/GitHub.
-4. `GOOGLE_CLIENT_ID` é **opcional** e não precisa ser configurado no primeiro deploy. O login por e-mail e senha funciona normalmente. Se quiser ativar Google, crie a variável manualmente no painel Render mais tarde.
-5. Aguarde o deploy. Abra `https://SEU-NOME.onrender.com`. A primeira pessoa cria uma conta com o convite; as próximas usam o mesmo código.
-6. As alterações futuras no GitHub causam novo deploy. O SQLite fica em **`/var/data/entrelinhas.sqlite` e permanece no disco**.
+- **Computador (janela ≥ 960px):** menu esquerdo e painel direito visíveis e imóveis; somente a área central (`main#main`) rola. O topo permanece parado. Quando as laterais são maiores que a tela, elas têm rolagem independente, sem levar a coluna toda junto.
+- **Celular e tablet (janela < 960px):** layout adaptativo com botão **☰** para abrir o menu lateral em uma gaveta. Toque em um item para navegar e fechar; feche também pelo X, fundo escuro ou Escape. Barra de navegação inferior preservada. Não força duas laterais em telas estreitas.
+- **Emojis:** botão **☺ Emoji** abre e fecha um painel com **6 categorias e mais de 120 opções**. Compatível com posts, resenhas e comentários, no PC e celular. Nenhuma mídia é armazenada.
+- Sem alterar backend, esquema do D1, senhas, convites, perfis ou mensagens. **Não é necessário executar nova migração para esta atualização de interface** se o banco já estava na V5.3.
 
-**Importante sobre custos:** Render *Free* não permite disco persistente: você perderia os dados ao reiniciar, adormecer ou atualizar o serviço. Este Blueprint escolhe o plano **Starter (pago)** exatamente para não perder resenhas e contas. Confirme o preço do serviço e do disco no painel do Render antes de criar. O SQLite não exige Supabase nem banco de dados separado.
+## Novidades
 
-## Se preferir criar um Web Service manualmente
+- Feed com busca por trecho, nome do leitor, título ou autor do livro, filtros de resenhas/pensamentos e ordenação por mais recentes ou mais interações (somente entre as publicações carregadas pela API).
+- Busca instantânea de leitores na Comunidade, por nome ou biografia. Nenhum perfil ou estatística fictícia foi criado.
+- Seletor de emojis em posts, comentários e resenhas, sem custo de mídia.
+- Corrigido um erro JavaScript da página Explorar livros (`b is not defined`) que podia impedir resultados de aparecer.
+- Interface adaptável a 100% de zoom, com Sair da conta disponível na barra lateral ou no Perfil.
+- Sem campo de upload de foto/vídeo/capa: nesta versão o R2 foi **desabilitado de propósito**. Avatares por emoji e capas da Open Library continuam funcionando. Vídeos enviados em versões com R2 dependem dele para reproduzir.
 
-- Runtime: **Node**, Node versão 22.16.0 ou mais recente dentro da linha 22.
-- Build command: `echo "No build needed"`
-- Start command: `npm start`
-- Plan: **0.5c-512mb ou superior** (pago)
-- Mount persistent disk: `/var/data` (1 GB costuma bastar para texto e metadados de poucas pessoas)
-- Environment: `NODE_ENV=production`, `DB_PATH=/var/data/entrelinhas.sqlite`, `INVITE_CODE=<seu código secreto>`, `GOOGLE_CLIENT_ID=<opcional>`
-- Health check path: `/api/health`
+## Preservação e migração
 
-## Testar no computador antes do Render
+O Worker V5.4 mantém o nome `entrelinhas-siteleitura`, o banco `entrelinhas-db` e o `database_id` incluído em `wrangler.jsonc`. Confira se corresponde ao seu banco antes de atualizar. **Não altere `AUTH_PEPPER` nem `INVITE_CODE`**, nem execute migrações destrutivas. A migração `0002_media.sql` é aditiva e necessária para compatibilidade com o esquema V5.2 (mesmo que o bucket R2 não seja ativado). Se já foi aplicada, o comando de migração não a repete.
 
-Instale **Node.js >= 22.13.0**; as dependências são zero (`node:sqlite` vem no Node 22 e nesta versão ainda emite um aviso experimental).
+## Instalar via PowerShell
 
-```bash
-cp .env.example .env
-# edite .env com um convite secreto de verdade
-npm start
-# abra http://localhost:3000
+Extraia o ZIP em uma nova pasta e, dentro da pasta que contém package.json:
+
+```powershell
+npm install
+npx wrangler d1 export entrelinhas-db --remote --output=backup-entrelinhas.sql
+npm run db:remote
+npm test
+npm run deploy
 ```
 
-No Windows, copie `.env.example` para `.env` pelo Explorador de Arquivos. `npm test` executa o teste de integração automatizado criando contas reais em um banco temporário.
+**Atenção**: o backup é recomendado antes da migração. Confirme que o comando de exportação foi concluído com sucesso antes de prosseguir. O deploy é manual e deve exibir o endereço público do Worker.
 
-## Login com Google (opcional)
+Link do site: https://entrelinhas-siteleitura.minhacan.workers.dev
 
-1. No [Google Cloud Console](https://console.cloud.google.com/apis/credentials), configure uma tela de consentimento OAuth e crie um **OAuth Client ID do tipo Web application**.
-2. Adicione **Authorized JavaScript origins**: `https://SEU-NOME.onrender.com` (ou seu domínio próprio). Para teste local, adicione `http://localhost:3000`.
-3. No Render, adicione `GOOGLE_CLIENT_ID` com esse client ID, como `...apps.googleusercontent.com`, e redeploy.
-4. Com login Google ativo, contas Google ainda desconhecidas deverão inserir o código de convite na aba **Criar minha conta**. Contas existentes com o mesmo e-mail verificado poderão entrar e vincular o Google à conta.
+## O que é gratuito / limitações
 
-O backend verifica a assinatura RS256 do ID token do Google e confirma emissor, audiência, expiração e e-mail verificado. Sem `GOOGLE_CLIENT_ID`, a opção fica invisível.
+Não habilite R2 nem configure uma assinatura R2 para esta versão. Workers e D1 têm cotas gratuitas limitadas; excedê-las pode provocar erro ou indisponibilidade no nível Free, e planos pagos têm condições distintas. A versão **não garante custo zero em uma conta que já esteja usando serviços pagos**. Consulte seu painel e mantenha Workers/D1 no nível gratuito. As melhorias de filtro usam o navegador e não fazem consultas ao D1 ao digitar. Não há upload de fotos ou vídeos sem armazenamento externo.
 
-## Segurança e privacidade
+Se no futuro decidir hospedar mídias, podemos adicionar um provedor com cotas claras. Enquanto isso, esta versão dispensa cobrança por armazenamento R2.
 
-- Contas com e-mail, senhas protegidas com `scrypt` + salt; nenhuma senha em texto puro.
-- Cookie de sessão aleatória, `HttpOnly`, `SameSite=Lax`, `Secure` em produção; tokens armazenados como hash no banco.
-- Endpoints sociais exigem login. Sem login só são acessíveis a tela de autenticação, endpoints de login/cadastro, configuração pública e health check.
-- Convite obrigatório para novas contas; opção de login Google não abre inscrições públicas.
-- Não existe criação automática de usuários, avaliações, seguidores ou resenhas.
-- **Privado** aqui significa *comunidade fechada com autenticação*, mas o endereço de login do Web Service continua acessível publicamente na internet. Para rede totalmente inacessível sem VPN, seria necessária arquitetura de rede privada diferente.
-- O projeto não implementa redefinição de senha por e-mail, uploads de imagens, moderação administrativa, e-mails de confirmação ou backups agendados. Para acesso muito restrito com convidados de confiança, use convites secretos e faça backups regulares.
-- O código de convite compartilhado pode ser reutilizado; para bloquear novas inscrições depois que o grupo estiver pronto, troque `INVITE_CODE` no Render sem afetar contas existentes. Convidados antigos não conseguem criar novas contas com o código antigo.
-- O projeto salva textos dos posts e resenhas, não cópias dos livros protegidos por direitos autorais.
+## Testes práticos após deploy
 
-## Estrutura
+1. Entre com a conta existente, confira se o perfil continua igual.
+2. No início, pesquise uma postagem, filtre Resenhas e ordene por Mais interações.
+3. Em Comunidade, pesquise um leitor pelo nome.
+4. Em Explorar livros, pesquise uma obra real e adicione-a à estante.
+5. Publique resenha com emojis e abra os comentários.
+6. Verifique o botão Sair da conta no zoom 100%.
 
-```
-entrelinhas-render/
-├── server.js           # API HTTP e banco SQLite, sem dependências externas
-├── public/
-│   ├── index.html      # frontend
-│   ├── style.css       # tema editorial responsivo
-│   └── app.js          # interação com API real
-├── tests/integration.test.js
-├── render.yaml         # Blueprint Render + disco persistente
-├── package.json
-├── .env.example
-└── .gitignore
-```
+## Teste de interface V5.4 depois de publicar
 
-**Backup do banco:** fazer backup do arquivo `/var/data/entrelinhas.sqlite` com segurança, usando snapshot do disco ou rotina de backup que faça uma cópia SQLite consistente. Não basta copiar o arquivo enquanto o banco está em WAL sem garantir checkpoint/backup. Consulte a documentação de snapshots/backups do Render. Não coloque backups com dados privados no GitHub.
+1. **Desktop:** abra no Chrome, Edge ou Firefox em 100% de zoom, role o feed: menus esquerdo e direito permanecem visíveis. O botão **Sair da conta** deve estar disponível na coluna esquerda (se a altura for pequena, role só aquela coluna).
+2. **Celular:** entre no site, toque em **☰** no alto à esquerda, navegue e confira o fechamento do menu. A barra de navegação inferior continua visível.
+3. **Emojis:** escreva um comentário, toque em **☺ Emoji**, selecione categoria e emoji. Repita ao escrever resenha no modal e postagem no feed.
+4. Caso o navegador mostre versão antiga, faça atualização completa (Ctrl+F5 no desktop) ou abra uma aba anônima.
+
+Não use `wrangler secret put` novamente, não recrie o D1 e não ative o R2 para esta edição. Se **0002_media.sql** já tiver sido aplicada na instalação V5.3, não é preciso rodar `npm run db:remote` de novo. Para publicar: `npm install`, `npm test`, `npm run deploy`.

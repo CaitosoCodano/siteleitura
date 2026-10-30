@@ -1,0 +1,19 @@
+{
+  "name": "entrelinhas-siteleitura",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-27",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "entrelinhas-db",
+      "database_id": "eb17c07e-ece4-4ecc-a828-6ac743a1fd81"
+    }
+  ]
+}

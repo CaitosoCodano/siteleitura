@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css" />
-  <script defer src="/app.js"></script>
+  <link rel="stylesheet" href="/style.css?v=5.4-layout" />
+  <script defer src="/app.js?v=5.4-layout"></script>
 </head>
 <body>
  <div id="toast" role="status" aria-live="polite"></div>
@@ -29,7 +29,8 @@
    </div></section>
  </div>
  <div id="app" class="app-layout" hidden>
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar" aria-label="Menu principal">
+    <button id="closeMobileMenu" class="drawer-close" type="button" aria-label="Fechar menu lateral">✕</button>
     <div class="brand"><span class="logo-mark">✦</span><span>entre<em>linhas</em><small>CLUBE DE LEITURA</small></span></div>
     <div class="side-caption">MENU PRINCIPAL</div>
     <nav id="sideNav" class="nav-items" aria-label="Navegação">
@@ -42,8 +43,9 @@
     </nav>
     <div class="side-bottom"><div class="side-mini">“A leitura nos dá um lugar para ir quando temos que ficar onde estamos.”</div><button id="sideUser" class="side-user"><span id="sideAvatar" class="avatar">📖</span><span class="side-user-label"><strong id="sideName"></strong><small>Minha conta</small></span><span class="side-chevron">›</span></button><button id="logoutBtn" class="logout-btn">↪ Sair da conta</button></div>
   </aside>
+  <button id="mobileMenuBackdrop" class="drawer-backdrop" type="button" aria-label="Fechar menu" hidden></button>
   <div class="app-center">
-    <header class="topbar"><div class="top-title"><span class="mobile-mark">✦</span><span id="pageBreadcrumb">Sua comunidade</span></div><div class="header-right"><span class="private-chip">✧ Comunidade privada</span><button id="headProfile" aria-label="Abrir perfil" class="mini-profile">📖</button></div></header>
+    <header class="topbar"><div class="top-title"><button id="openMobileMenu" class="menu-toggle" type="button" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false"><span aria-hidden="true">☰</span></button><span class="mobile-mark">✦</span><span id="pageBreadcrumb">Sua comunidade</span></div><div class="header-right"><span class="private-chip">✧ Comunidade privada</span><button id="headProfile" aria-label="Abrir perfil" class="mini-profile">📖</button></div></header>
     <main id="main" class="main-content"></main>
   </div>
   <aside class="rightbar" id="rightbar"><div class="right-inner"><div class="right-top"><span class="eyebrow">UM ESPAÇO PARA SENTIR</span><h3>Entre uma página<br>e outra, <i>a vida.</i></h3><p>Cada história merece ser compartilhada.</p><div class="right-flower">◈</div></div><div class="right-box"><div class="eyebrow">SEU ESPAÇO</div><div id="rightStats" class="right-stat-list"></div></div><div class="right-footer">Feito para leitores reais. ✦</div></div></aside>
